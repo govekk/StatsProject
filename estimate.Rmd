@@ -10,3 +10,8 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+obs_sample <- c(922, 299, 1106, 121, 1621, 1164, 1912, 937, 914, 593, 
+                85, 1090, 1004, 139, 1451, 24, 267, 1045, 1062, 1274)
+```
