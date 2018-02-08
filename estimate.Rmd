@@ -1,0 +1,12 @@
+---
+title: "Estimate"
+author: "Kiya Govek"
+date: "2/7/2018"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
