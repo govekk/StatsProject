@@ -49,5 +49,17 @@ var(custom2_statistic) + (mean(custom2_statistic) - N)^2
 sample_values <- c(922, 299, 1106, 121, 1621, 1164, 1912, 937, 914, 593, 
                 85, 1090, 1004, 139, 1451, 24, 267, 1045, 1062, 1274)
 max(sample_values) + (max(sample_values)^(k+1) + k) / ((k+1)*max(sample_values)^k)
+```
 
+### Bootstrap CI
+```{r}
+n <- length(sample_values)       # sample size
+N <- 10^4                # desired no. resamples
+
+boot_statistic <- numeric(N) # a place to store the bootstrap stats
+for (i in 1:N) {
+  x <- sample(sample_values, size = n, replace = TRUE)
+  boot_statistic[i] <- max(x) + (max(x)^(k+1) + k) / ((k+1)*max(x)^k)
+}
+quantile(boot_statistic, probs = c(0.025, 0.975))
 ```
