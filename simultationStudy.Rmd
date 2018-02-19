@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Run simulation
 ```{r}
-N <- 350
+N <- 500
 k <- 10
 runs <- 10000
 mom_statistic <- numeric(runs)
@@ -24,16 +24,19 @@ for(i in 1:runs) {
   sample_values <- sample(1:N, k)
   mom_statistic[i] <- 2*mean(sample_values) - 1
   mle_statistic[i] <- max(sample_values)
-  # custom 1
-  # custom 2
+  custom1_statistic[i] <- 2*median(sample_values)
+  custom2_statistic[i] <- max(sample_values) + min(sample_values)
 }
 ```
 
 ## Compare estimators
-So far looks like mom is less biased but mle has smaller variance
 ```{r}
-summary(mom_statistic)
-var(mom_statistic)
-summary(mle_statistic)
-var(mle_statistic)
+# Mean squared error of MoM estimator
+var(mom_statistic) + (mean(mom_statistic) - N)^2
+# Mean squared error of ML estimator
+var(mle_statistic) + (mean(mle_statistic) - N)^2
+# Mean squared error of first custom estimator
+var(custom1_statistic) + (mean(custom1_statistic) - N)^2
+# Mean squared error of second custom estimator
+var(custom2_statistic) + (mean(custom2_statistic) - N)^2
 ```
