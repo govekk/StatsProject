@@ -2,19 +2,35 @@
 title: "Results"
 author: "James Yang"
 date: "2/19/2018"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
+```{r setup, include = FALSE, cache = FALSE}
+library(ggplot2)
+library(knitr)
+library(tidyr)
+library(forcats)
+library(gridExtra)
+
+opts_template$set(figure1 = list(fig.height = 3, fig.width = 5.5),
+                  figure2 = list(fig.height = 3, fig.width = 5.5),
+                  figure3 = list(fig.height = 4.5, fig.width = 5.5)) 
+```
+
+
 **Results**
+
+(Note: talk about why using different sample and pop sizes in the methodology section)
+
+In this section, we examine the four estimators (Method of Moment, Maximum Likelihood, and two of our custom estimators) by looking at the results of our simulation study. We have computed the mean squared error, variance as well bias for each of our estimator, given different sample sizes and population sizes as the input. Different inputs of sample size and population size are used to test if the performances of the estimators are consistent. We plot the properties of the estimators in the line charts displayed below.
+
 
 ```{r, echo = FALSE}
 set.seed(23)
 
-library(ggplot2)
-library(tidyr)
-library(forcats)
-
-plot_simulation <- function(N_input, k_input) {
+plot_simulation <- function(N_input, k_input, table = FALSE, num) {
   
   # run simulation given sample size and population size
   N <- N_input
@@ -50,23 +66,77 @@ plot_simulation <- function(N_input, k_input) {
   names <- c("MoM", "MLE", "Custom 1", "Custom 2")
   
   # put into data frame and gather the estimator values
-  params <- data.frame(estimators = names, MSE = mse_list, 
+  params_data <- data.frame(Estimators = names, MSE = mse_list, 
                        Variance = var_list, Bias = bias_list)
-  params <- gather(params, key = stat, value = Value, MSE, Variance, Bias)
+  params <- gather(params_data, key = stat, value = Value, MSE, Variance, Bias)
 
   # plot the line graph
-  ggplot() +
-    geom_line(data = params, aes(x = fct_inorder(estimators), y = Value, 
-              group = fct_inorder(stat), color = fct_inorder(stat))) + 
+  plt <- ggplot(data = params, aes(x = fct_inorder(Estimators), y = Value)) +
+    geom_line(aes(group = fct_inorder(stat), color = fct_inorder(stat))) + 
+    geom_label(aes(label = round(Value))) +
     xlab("Estimators") +
     labs(color = "Properties") +
-    ggtitle(paste("Properties of Estimators for Sample Size", k_input, 
-                  "and Population Size", N_input))
+    ggtitle(paste0("Figure ", num, ". ",
+                  "Sample Size ", k_input, 
+                  " and Population Size ", N_input))
+  
+  # plot table if input requests
+  if (table) {
+    params_rounded <- data.frame(Estimators = names, MSE = round(mse_list, digits = 2), 
+                                 Variance = round(var_list, digits = 2), 
+                                 Bias = round(bias_list, digits = 2))
+    tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+    tbl <- tableGrob(params_rounded, rows=NULL, theme=tt)
+    # Plot chart and table into one object
+    grid.arrange(plt, tbl,
+                nrow=2,
+                as.table=TRUE,
+                heights=c(2,1))
+  }
+  else{plt}
 }
 ```
 
 
-```{r, echo = FALSE}
-plot_simulation(200, 10)
+```{r, echo = FALSE, opts.label = "figure1"}
+plot_simulation(20, 3, num = 1)
 ```
 
+From `Figure 1`, we see that our first custom estimator has the least mean squared error and a bias of 0. However, MLE has the least variance thus more efficient, but since its bias is significantly larger than that of the other three, its mean squared error is not optimal. In comparison, the method of moment estimator and the second custom estimator are much worse, given their much higher variances.
+
+
+```{r, echo = FALSE, opts.label = "figure2"}
+plot_simulation(200, 10, num = 2)
+```
+
+In `Figure 2`, after we increase the sample size and population size, we see that the trend between the four estimators is roughly the same as `Figure 1`, except that the mean squared error and variance of the method of moment estimator is much larger than those of the rest, which increases the slope of the line chart. Our first custom estimator still has the best performance among the four, in terms of MSE. 
+
+
+```{r, echo = FALSE, warning = FALSE, opts.label = "figure3"}
+plot_simulation(2000, 100, table = TRUE, num = 3)
+```
+
+In `Figure 3`, we find that as sizes increase, the MSE of MoM estimator becomes significantly worse. MLE and our second estimator are similar in performance, where MLE has a slightly lower MSE. Unfortunately, we get `NA` values for our first custom estimator, because in order to get the estimate, we need to first derive $max(sample\_values)^{(k+1)}$, which exceeds the limit of R's calculation. However, given its performance in the previous two scenarios, we have reason to believe it is a better estimator than the other three. One downside of using the estimator, as indicated above, is that it can be compuationally difficult to derive if the sample and population sizes are large, but the issue can be solved by using a calculator with larger capacity, or using MLE instead (which is the second best estimator from what we have examined). However, assuming that we have the computational capability/the sizes are relatively small, we decide to use our custom estimator given its lower bias and lower mean squared error compared to the other estimators. 
+
+```{r, echo = FALSE}
+sample_values <- c(922, 299, 1106, 121, 1621, 1164, 1912, 937, 914, 593, 
+                85, 1090, 1004, 139, 1451, 24, 267, 1045, 1062, 1274)
+k <- length(sample_values)
+
+estimate <- max(sample_values) + (max(sample_values)^(k+1) + k) / ((k+1)*max(sample_values)^k)
+
+n <- length(sample_values)       # sample size
+N <- 10^4                # desired no. resamples
+
+boot_statistic <- numeric(N) # a place to store the bootstrap stats
+for (i in 1:N) {
+  x <- sample(sample_values, size = n, replace = TRUE)
+  boot_statistic[i] <- max(x) + (max(x)^(k+1) + k) / ((k+1)*max(x)^k)
+}
+conf <- quantile(boot_statistic, probs = c(0.025, 0.975))
+```
+
+After deciding the estimator, we use it to estimate $N$ based on a random sample of 20 objects[^1]. Our estimate for $N$ is `r round(estimate)` after rounding. We also perform bootstrap on the random sample, and compute the 95% bootstrap confidence interval for our estimate. We are 95% confident that the true $N$ is between `r round(conf[[1]], digits = 2)` and `r round(conf[[2]], digits = 2)`. 
+
+[^1]:
+The random sample used above consists of `r sample_values`. 
