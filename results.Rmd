@@ -1,10 +1,10 @@
 ---
-title: "Results"
-author: "James Yang"
+title: "Results Section"
+author: "Matt Carter & Kiya Govek & James Yang"
 date: "2/19/2018"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include = FALSE, cache = FALSE}
